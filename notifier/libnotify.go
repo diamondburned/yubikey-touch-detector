@@ -16,19 +16,16 @@ func SetupLibnotifyNotifier(notifiers *sync.Map) {
 
 	conn, err := dbus.SessionBusPrivate()
 	if err != nil {
-		log.Error("Cannot initialize desktop notifications, unable to create session bus: ", err)
-		return
+		log.Fatal("Cannot initialize desktop notifications, unable to create session bus: ", err)
 	}
 	defer conn.Close()
 
 	if err := conn.Auth(nil); err != nil {
-		log.Error("Cannot initialize desktop notifications, unable to authenticate: ", err)
-		return
+		log.Fatal("Cannot initialize desktop notifications, unable to authenticate: ", err)
 	}
 
 	if err := conn.Hello(); err != nil {
-		log.Error("Cannot initialize desktop notifications, unable get bus name: ", err)
-		return
+		log.Fatal("Cannot initialize desktop notifications, unable get bus name: ", err)
 	}
 
 	notification := notify.Notification{
@@ -47,8 +44,7 @@ func SetupLibnotifyNotifier(notifiers *sync.Map) {
 		notify.WithLogger(log.StandardLogger()),
 	)
 	if err != nil {
-		log.Error("Cannot initialize desktop notifications, unable to initialize D-Bus notifier interface: ", err)
-		return
+		log.Fatal("Cannot initialize desktop notifications, unable to initialize D-Bus notifier interface: ", err)
 	}
 	defer notifier.Close()
 
@@ -65,15 +61,13 @@ func SetupLibnotifyNotifier(notifiers *sync.Map) {
 		if activeTouchWaits > 0 {
 			id, err := notifier.SendNotification(notification)
 			if err != nil {
-				log.Error("Cannot show notification: ", err)
-				continue
+				log.Fatal("Cannot show notification: ", err)
 			}
 
 			atomic.CompareAndSwapUint32(&notification.ReplacesID, 0, id)
 		} else if id := atomic.LoadUint32(&notification.ReplacesID); id != 0 {
 			if _, err := notifier.CloseNotification(id); err != nil {
-				log.Error("Cannot close notification: ", err)
-				continue
+				log.Fatal("Cannot close notification: ", err)
 			}
 		}
 	}
